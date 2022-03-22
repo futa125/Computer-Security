@@ -151,7 +151,7 @@ def init(master_password):
     with open(password_manager_file_name, 'w') as file:
         json.dump(password_dictionary, file)
 
-    print(get_file_sha256())
+    return get_file_sha256()
 
 
 def main():
@@ -187,19 +187,23 @@ def main():
     password_manager_mode = getattr(args, password_manager_mode_argument)
 
     if password_manager_mode == init_argument:
-        init(getattr(args, master_password_argument))
+        password_file_hash = init(getattr(args, master_password_argument))
+        print('Password manager initialized, password file hash: {}'.format(password_file_hash))
     elif password_manager_mode == put_argument:
         password_file_hash = put(getattr(args, master_password_argument),
                                  getattr(args, site_address_argument),
                                  getattr(args, site_password_argument),
                                  getattr(args, password_file_hash_argument))
-        print(password_file_hash)
+        print('Password successfully saved, new password file hash: {}'.format(password_file_hash))
     elif password_manager_mode == get_argument:
         password = get(getattr(args, master_password_argument),
                        getattr(args, site_address_argument),
                        getattr(args, password_file_hash_argument))
-        print(password)
+        print('Site password: {}'.format(password))
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
