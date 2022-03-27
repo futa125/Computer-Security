@@ -5,15 +5,19 @@ import hashlib
 import json
 from os.path import exists
 
+from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Protocol.KDF import scrypt
 
+init_argument = 'init'
+put_argument = 'put'
+get_argument = 'get'
+
 kdf_params = {'N': 2 ** 14, 'r': 8, 'p': 1}
 kdf_byte_size = 32
-kdf_salt = 'SRS-LAB1'
 
-password_manager_file_name = 'passwords.txt'
+password_manager_file_name = 'passwords.json'
 max_password_length = 256
 
 
@@ -81,8 +85,11 @@ def get(master_password, site_address, password_file_hash=None):
     with open(password_manager_file_name, 'r') as file:
         password_dictionary = json.load(file)
 
+    kdf_salt = password_dictionary['kdf_salt']
+    verification_hmac_msg = password_dictionary['verification_hmac_msg']
+
     kdf_key = scrypt(master_password, kdf_salt, kdf_byte_size, **kdf_params)
-    kdf_hmac = HMAC.new(kdf_key, str.encode(kdf_salt), digestmod=SHA256)
+    kdf_hmac = HMAC.new(kdf_key, bytes.fromhex(verification_hmac_msg), digestmod=SHA256)
 
     if kdf_hmac.digest().hex() != password_dictionary['verification_hmac']:
         raise InvalidMasterPassword()
@@ -118,7 +125,15 @@ def put(master_password, site_address, site_password, password_file_hash=None):
     with open(password_manager_file_name, 'r') as file:
         password_dictionary = json.load(file)
 
+    kdf_salt = password_dictionary['kdf_salt']
+    verification_hmac_msg = password_dictionary['verification_hmac_msg']
+
     kdf_key = scrypt(master_password, kdf_salt, kdf_byte_size, **kdf_params)
+    kdf_hmac = HMAC.new(kdf_key, bytes.fromhex(verification_hmac_msg), digestmod=SHA256)
+
+    if kdf_hmac.digest().hex() != password_dictionary['verification_hmac']:
+        raise InvalidMasterPassword()
+
     site_address_hmac = HMAC.new(kdf_key, str.encode(site_address), digestmod=SHA256)
     site_password_padded = str.encode(site_password).rjust(max_password_length, b'\x00')
     site_address_and_password = site_address_hmac.digest() + site_password_padded
@@ -140,12 +155,16 @@ def put(master_password, site_address, site_password, password_file_hash=None):
 
 
 def init(master_password):
+    kdf_salt = Random.get_random_bytes(kdf_byte_size).hex()
     key = scrypt(master_password, kdf_salt, kdf_byte_size, **kdf_params)
-    hmac = HMAC.new(key, str.encode(kdf_salt), digestmod=SHA256)
+    verification_hmac_msg = Random.get_random_bytes(kdf_byte_size).hex()
+    hmac = HMAC.new(key, bytes.fromhex(verification_hmac_msg), digestmod=SHA256)
 
     password_dictionary = {
-        "verification_hmac": hmac.digest().hex(),
-        "passwords": {},
+        'verification_hmac': hmac.digest().hex(),
+        'verification_hmac_msg': verification_hmac_msg,
+        'kdf_salt': kdf_salt,
+        'passwords': {},
     }
 
     with open(password_manager_file_name, 'w') as file:
@@ -154,11 +173,8 @@ def init(master_password):
     return get_file_sha256()
 
 
-def main():
+def load_args():
     password_manager_mode_argument = 'mode'
-    init_argument = 'init'
-    put_argument = 'put'
-    get_argument = 'get'
     master_password_argument = 'master_password'
     site_address_argument = 'site_address'
     site_password_argument = 'site_password'
@@ -184,21 +200,22 @@ def main():
 
     args = parser.parse_args()
 
-    password_manager_mode = getattr(args, password_manager_mode_argument)
+    return getattr(args, password_manager_mode_argument, None), getattr(args, master_password_argument, None), \
+           getattr(args, site_address_argument, None), getattr(args, site_password_argument, None), \
+           getattr(args, password_file_hash_argument, None)
+
+
+def main():
+    password_manager_mode, master_password, site_address, site_password, password_file_hash = load_args()
 
     if password_manager_mode == init_argument:
-        password_file_hash = init(getattr(args, master_password_argument))
+        password_file_hash = init(master_password)
         print('Password manager initialized, password file hash: {}'.format(password_file_hash))
     elif password_manager_mode == put_argument:
-        password_file_hash = put(getattr(args, master_password_argument),
-                                 getattr(args, site_address_argument),
-                                 getattr(args, site_password_argument),
-                                 getattr(args, password_file_hash_argument))
+        password_file_hash = put(master_password, site_address, site_password, password_file_hash)
         print('Password successfully saved, new password file hash: {}'.format(password_file_hash))
     elif password_manager_mode == get_argument:
-        password = get(getattr(args, master_password_argument),
-                       getattr(args, site_address_argument),
-                       getattr(args, password_file_hash_argument))
+        password = get(master_password, site_address, password_file_hash)
         print('Site password: {}'.format(password))
 
 
