@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"syscall"
 
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/term"
 )
 
 const (
@@ -20,9 +22,10 @@ var (
 	ErrInvalidEncodedEntry   = errors.New("the encoded entry is not in the correct format")
 	ErrIncompatibleAlgorithm = errors.New("algorithm should be argon2id")
 	ErrIncompatibleVersion   = errors.New("incompatible version of argon2id")
+	pepper                   = []byte("12345678")
 )
 
-type HashingParams struct {
+type Params struct {
 	memory      uint32
 	iterations  uint32
 	parallelism uint8
@@ -30,13 +33,23 @@ type HashingParams struct {
 	keyLength   uint32
 }
 
-func GenerateHashFromPassword(password string, p *HashingParams) (encodedEntry string, err error) {
+func CreateHashingParams(memory, iterations, saltLength, keyLength uint32, parallelism uint8) Params {
+	return Params{
+		memory:      memory,
+		iterations:  iterations,
+		parallelism: parallelism,
+		saltLength:  saltLength,
+		keyLength:   keyLength,
+	}
+}
+
+func GenerateHashFromPassword(password string, p *Params) (encodedEntry string, err error) {
 	salt, err := generateRandomBytes(p.saltLength)
 	if err != nil {
 		return "", err
 	}
 
-	hash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, p.parallelism, p.keyLength)
+	hash := argon2.IDKey([]byte(password), append(salt, pepper...), p.iterations, p.memory, p.parallelism, p.keyLength)
 
 	encodedSalt := base64.RawStdEncoding.EncodeToString(salt)
 	encodedHash := base64.RawStdEncoding.EncodeToString(hash)
@@ -62,7 +75,7 @@ func ComparePasswordAndHash(password, encodedEntry string) (match bool, err erro
 
 	calculatedHash := argon2.IDKey(
 		[]byte(password),
-		salt,
+		append(salt, pepper...),
 		params.iterations,
 		params.memory,
 		params.parallelism,
@@ -75,6 +88,32 @@ func ComparePasswordAndHash(password, encodedEntry string) (match bool, err erro
 	return false, nil
 }
 
+func ReadPassword(recheck bool) (string, error) {
+	fmt.Print("Password: ")
+	bytePassword, err := term.ReadPassword(syscall.Stdin)
+	fmt.Println()
+	if err != nil {
+		return "", err
+	}
+
+	if recheck {
+		fmt.Print("Repeat Password: ")
+		repeatedBytePassword, err := term.ReadPassword(syscall.Stdin)
+		fmt.Println()
+		if err != nil {
+			return "", err
+		}
+
+		if bytes.Compare(bytePassword, repeatedBytePassword) != 0 {
+			return "", errors.New("password mismatch")
+		}
+	}
+
+	password := string(bytePassword)
+
+	return strings.TrimSpace(password), nil
+}
+
 func generateRandomBytes(byteCount uint32) ([]byte, error) {
 	randomBytes := make([]byte, byteCount)
 	_, err := rand.Read(randomBytes)
@@ -85,7 +124,7 @@ func generateRandomBytes(byteCount uint32) ([]byte, error) {
 	return randomBytes, nil
 }
 
-func decodeEntry(encodedEntry string) (params *HashingParams, salt, hash []byte, err error) {
+func decodeEntry(encodedEntry string) (params *Params, salt, hash []byte, err error) {
 	encodedEntryValues := strings.Split(encodedEntry, encodedEntryDelimiter)
 	if len(encodedEntryValues) != 6 {
 		return nil, nil, nil, ErrInvalidEncodedEntry
@@ -109,7 +148,7 @@ func decodeEntry(encodedEntry string) (params *HashingParams, salt, hash []byte,
 		return nil, nil, nil, ErrIncompatibleVersion
 	}
 
-	params = &HashingParams{}
+	params = &Params{}
 	_, err = fmt.Sscanf(
 		encodedEntryValues[3],
 		"m=%d,t=%d,p=%d",

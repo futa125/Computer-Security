@@ -1,3 +1,7 @@
+github.com/futa125/Computer-Security/LAB2 v0.0.0-20220412160735-b1ae9e5145dc h1:Inlkx+JKO+IKhIJvuZV0C3h1TEsn4VMK0NhWsejwZQo=
+github.com/futa125/Computer-Security/LAB2 v0.0.0-20220412160735-b1ae9e5145dc/go.mod h1:ZvJluypBw2Aj3EAGdQcgA+DJWcP75wfrknNfBS+ghsQ=
+github.com/mattn/go-sqlite3 v1.14.12 h1:TJ1bhYJPV44phC+IMu1u2K/i5RriLTPe+yc68XDJ1Z0=
+github.com/mattn/go-sqlite3 v1.14.12/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
 golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 h1:kUhD7nTDoI3fVd9G4ORWrbV5NY0liEs/Jg2pv5f+bBA=
 golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 h1:SrN+KX8Art/Sf4HNj6Zcz06G7VEz+7w9tdXTPOZ7+l4=
