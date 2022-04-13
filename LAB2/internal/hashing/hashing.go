@@ -25,9 +25,9 @@ type Params struct {
 
 var (
 	DefaultHashingParams = &Params{
-		Memory:      64 * 1024,
-		Iterations:  6,
-		Parallelism: 2,
+		Memory:      128 * 1024,
+		Iterations:  4,
+		Parallelism: 4,
 		SaltLength:  16,
 		KeyLength:   32,
 	}
@@ -67,10 +67,10 @@ func GenerateHashFromPassword(password string, params *Params) (string, error) {
 	return entry, nil
 }
 
-func ComparePasswordAndHash(password, entry string) (match bool, err error) {
+func ComparePasswordAndHash(password, entry string) (bool, *Params, error) {
 	params, salt, hash, err := decodeEntry(entry)
 	if err != nil {
-		return false, err
+		return false, params, err
 	}
 
 	calculatedHash := argon2.IDKey(
@@ -83,9 +83,9 @@ func ComparePasswordAndHash(password, entry string) (match bool, err error) {
 	)
 
 	if bytes.Compare(hash, calculatedHash) == 0 {
-		return true, nil
+		return true, params, nil
 	}
-	return false, nil
+	return false, params, nil
 }
 
 func CalculateSha256(input string) string {
