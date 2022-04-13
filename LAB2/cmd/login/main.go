@@ -1,71 +1,33 @@
 package main
 
 import (
-	"errors"
-	"flag"
+	"fmt"
 	"log"
 
-	"github.com/futa125/Computer-Security/LAB2/internal/database"
 	"github.com/futa125/Computer-Security/LAB2/internal/hashing"
+	"github.com/futa125/Computer-Security/LAB2/internal/input"
+	"github.com/futa125/Computer-Security/LAB2/pkg/login"
 )
 
-const filePath = "passwords.db"
+const dbFilePath = "passwords.db"
 
 func main() {
-	flag.Parse()
-	args := flag.Args()
-	user := args[0]
-	params := hashing.CreateHashingParams(64*1024, 6, 16, 32, 2)
-	err := login(user, params)
+	user, err := input.ParseLoginArgs()
 	if err != nil {
 		log.Fatal(err)
 	}
-}
 
-func login(user string, params hashing.Params) error {
-	if user == "" {
-		return errors.New("user argument is empty")
-	}
+	for {
+		err = login.Login(user, dbFilePath, hashing.DefaultHashingParams)
 
-	password, err := hashing.ReadPassword(false)
-	if err != nil {
-		return err
-	}
-
-	manager, dbCloseFunc, err := database.CreateDatabaseManager(filePath)
-	if err != nil {
-		return err
-	}
-	defer dbCloseFunc()
-
-	databaseEntry, err := manager.GetDatabaseEntry(user)
-	if err != nil {
-		return err
-	}
-
-	match, err := hashing.ComparePasswordAndHash(password, databaseEntry.HashedPassword)
-	if err != nil {
-		return err
-	}
-	if !match {
-		return errors.New("invalid username or password")
-	}
-
-	if databaseEntry.ResetPassword {
-		password, err = hashing.ReadPassword(true)
-		encodedEntry, err := hashing.GenerateHashFromPassword(password, &params)
-		if err != nil {
-			return err
-		}
-
-		databaseEntry.HashedPassword = encodedEntry
-		databaseEntry.ResetPassword = false
-
-		err = manager.SaveDatabaseEntry(databaseEntry)
-		if err != nil {
-			return err
+		switch err {
+		case login.ErrInvalidCredentials:
+			fmt.Println("Username or password incorrect.")
+		case nil:
+			fmt.Println("Login successful.")
+			return
+		default:
+			log.Fatal(err)
 		}
 	}
-
-	return nil
 }
