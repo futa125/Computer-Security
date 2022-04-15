@@ -3,6 +3,9 @@ package input
 import (
 	"errors"
 	"flag"
+
+	"github.com/futa125/Computer-Security/LAB2/internal/hashing"
+	"github.com/spf13/pflag"
 )
 
 var ErrInvalidArgument = errors.New("invalid argument")
@@ -39,11 +42,27 @@ func ParseUserManagementArgs() (string, string, error) {
 	return user, mode, nil
 }
 
-func ParseCrackerArgs() (argon2idHash, wordListFilePath string, threadCount uint) {
-	flag.StringVar(&argon2idHash, "hash", "", "")
-	flag.StringVar(&wordListFilePath, "wordlist", "", "")
-	flag.UintVar(&threadCount, "threads", 2, "")
-	flag.Parse()
+func ParseCrackerArgs() (
+	params *hashing.Params,
+	threadCount uint8,
+	password,
+	wordListFilePath string,
+) {
+	params = &hashing.Params{}
+	pflag.Uint32Var(&params.Memory, "argon-memory", 128, "")
+	pflag.Uint32Var(&params.Iterations, "argon-iterations", 4, "")
+	pflag.Uint8Var(&params.Parallelism, "argon-parallelism", 4, "")
+	pflag.Uint32Var(&params.SaltLength, "argon-salt-length", 16, "")
+	pflag.Uint32Var(&params.KeyLength, "argon-key-length", 32, "")
 
-	return argon2idHash, wordListFilePath, threadCount
+	pflag.Uint8Var(&threadCount, "threads", 4, "")
+
+	pflag.StringVar(&password, "password", "", "")
+	pflag.StringVar(&wordListFilePath, "wordlist", "", "")
+
+	pflag.Parse()
+
+	params.Memory = params.Memory * 1024
+
+	return params, threadCount, password, wordListFilePath
 }

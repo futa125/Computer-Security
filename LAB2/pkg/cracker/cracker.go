@@ -11,21 +11,21 @@ import (
 )
 
 type cracker struct {
-	wordList     []string
-	argon2idHash string
-	threadCount  uint
+	wordList    []string
+	hash        string
+	threadCount uint8
 }
 
-func CreateCracker(argon2idHash, wordListFilePath string, threadCount uint) (*cracker, error) {
+func CreateCracker(hash, wordListFilePath string, threadCount uint8) (*cracker, error) {
 	wordList, err := readWordListFile(wordListFilePath)
 	if err != nil {
 		return nil, err
 	}
 
 	return &cracker{
-		wordList:     wordList,
-		argon2idHash: argon2idHash,
-		threadCount:  threadCount,
+		wordList:    wordList,
+		hash:        hash,
+		threadCount: threadCount,
 	}, nil
 }
 
@@ -40,7 +40,7 @@ func (c *cracker) CrackPassword() {
 
 	for i := 0; i < int(c.threadCount); i++ {
 		wg.Add(1)
-		go checkPasswordMatch(ctx, cancel, &wg, wordChan, c.argon2idHash)
+		go checkPasswordMatch(ctx, cancel, &wg, wordChan, c.hash)
 	}
 
 	wg.Wait()
@@ -78,14 +78,14 @@ func checkPasswordMatch(
 	cancelFunc context.CancelFunc,
 	wg *sync.WaitGroup,
 	wordChan <-chan string,
-	argon2idHash string,
+	hash string,
 ) {
 	defer wg.Done()
 
 	for {
 		select {
 		case word := <-wordChan:
-			success, _, _ := hashing.ComparePasswordAndHash(word, argon2idHash)
+			success, _, _ := hashing.ComparePasswordAndHash(word, hash)
 			if success {
 				fmt.Printf("Match found, checked word: %s\n", word)
 				cancelFunc()
