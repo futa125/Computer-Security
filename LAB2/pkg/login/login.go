@@ -19,11 +19,10 @@ func Login(user, dbFilePath string, params *hashing.Params) error {
 		return err
 	}
 
-	client, dbCloseFunc, err := database.CreateDatabaseClient(dbFilePath)
+	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
-	defer dbCloseFunc()
 
 	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
 	if err != nil {

@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -26,30 +25,26 @@ type Client struct {
 	db *sql.DB
 }
 
-func CreateDatabaseClient(dbFilePath string) (Client, func(), error) {
+func CreateDatabaseClient(dbFilePath string) (client Client, err error) {
 	db, err := sql.Open(driverName, dbFilePath)
+	client = Client{}
 	if err != nil {
-		return Client{}, nil, err
+		return client, err
 	}
 
 	_, err = db.Exec(createTableQuery)
 	if err != nil {
-		return Client{}, nil, err
+		return client, err
 	}
 
-	dbCloseFunc := func() {
-		err := db.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	return Client{
+	client = Client{
 		db: db,
-	}, dbCloseFunc, nil
+	}
+
+	return client, err
 }
 
-func (client Client) SaveDatabaseEntry(dbEntry Entry) error {
+func (client Client) SaveDatabaseEntry(dbEntry Entry) (err error) {
 	stmt, err := client.db.Prepare(insertQuery)
 	if err != nil {
 		return err
@@ -61,25 +56,26 @@ func (client Client) SaveDatabaseEntry(dbEntry Entry) error {
 	}
 
 	defer func(stmt *sql.Stmt) {
-		err := stmt.Close()
-		if err != nil {
-			log.Fatal(err)
+		closeErr := stmt.Close()
+		if closeErr != nil {
+			err = closeErr
 		}
 	}(stmt)
 
-	return nil
+	return err
 }
 
-func (client Client) GetDatabaseEntry(hashedUser string) (Entry, error) {
+func (client Client) GetDatabaseEntry(hashedUser string) (entry Entry, err error) {
 	rows, err := client.db.Query(selectQuery, hashedUser)
+	entry = Entry{}
 	if err != nil {
-		return Entry{}, err
+		return entry, err
 	}
 
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Fatal(err)
+		closeErr := rows.Close()
+		if closeErr != nil {
+			err = closeErr
 		}
 	}(rows)
 
@@ -87,22 +83,25 @@ func (client Client) GetDatabaseEntry(hashedUser string) (Entry, error) {
 		var hashedUser string
 		var hashedPassword string
 		var resetPassword bool
+
 		err = rows.Scan(&hashedUser, &hashedPassword, &resetPassword)
 		if err != nil {
-			return Entry{}, err
+			return entry, err
 		}
 
-		return Entry{
+		entry = Entry{
 			HashedUser:     hashedUser,
 			HashedPassword: hashedPassword,
 			ResetPassword:  resetPassword,
-		}, nil
+		}
+
+		return entry, nil
 	}
 
-	return Entry{}, nil
+	return entry, nil
 }
 
-func (client Client) RemoveDatabaseEntry(dbEntry Entry) error {
+func (client Client) RemoveDatabaseEntry(dbEntry Entry) (err error) {
 	stmt, err := client.db.Prepare(removeQuery)
 	if err != nil {
 		return err
@@ -114,11 +113,11 @@ func (client Client) RemoveDatabaseEntry(dbEntry Entry) error {
 	}
 
 	defer func(stmt *sql.Stmt) {
-		err := stmt.Close()
-		if err != nil {
-			log.Fatal(err)
+		closeErr := stmt.Close()
+		if closeErr != nil {
+			err = closeErr
 		}
 	}(stmt)
 
-	return nil
+	return err
 }

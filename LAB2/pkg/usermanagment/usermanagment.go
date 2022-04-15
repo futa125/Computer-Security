@@ -16,11 +16,10 @@ var (
 func AddUser(user, dbFilePath string, params *hashing.Params) error {
 	hashedUser := hashing.CalculateSha256(user)
 
-	client, dbCloseFunc, err := database.CreateDatabaseClient(dbFilePath)
+	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
-	defer dbCloseFunc()
 
 	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
 	if err != nil {
@@ -57,11 +56,10 @@ func AddUser(user, dbFilePath string, params *hashing.Params) error {
 func ChangePassword(user, dbFilePath string, params *hashing.Params) error {
 	hashedUser := hashing.CalculateSha256(user)
 
-	client, dbCloseFunc, err := database.CreateDatabaseClient(dbFilePath)
+	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
-	defer dbCloseFunc()
 
 	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
 	if err != nil {
@@ -94,11 +92,10 @@ func ChangePassword(user, dbFilePath string, params *hashing.Params) error {
 func ForcePasswordReset(user, dbFilePath string) error {
 	user = hashing.CalculateSha256(user)
 
-	client, dbCloseFunc, err := database.CreateDatabaseClient(dbFilePath)
+	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
-	defer dbCloseFunc()
 
 	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
@@ -121,11 +118,10 @@ func ForcePasswordReset(user, dbFilePath string) error {
 func DeleteUser(user, dbFilePath string) error {
 	user = hashing.CalculateSha256(user)
 
-	client, dbCloseFunc, err := database.CreateDatabaseClient(dbFilePath)
+	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
-	defer dbCloseFunc()
 
 	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
