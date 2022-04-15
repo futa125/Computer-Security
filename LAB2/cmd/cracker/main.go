@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	params, threadCount, password, wordListFilePath := input.ParseCrackerArgs()
+	params, threadCount, password, passwordsFilePath := input.ParseCrackerArgs()
 
 	hash, err := hashing.GenerateHashFromPassword(password, params)
 	if err != nil {
@@ -19,7 +19,7 @@ func main() {
 
 	fmt.Printf("Generated hash: %s\n", hash)
 
-	c, err := cracker.CreateCracker(hash, wordListFilePath, threadCount)
+	c, err := cracker.CreateCracker(hash, passwordsFilePath, threadCount)
 	if err != nil {
 		log.Fatal(err)
 	}

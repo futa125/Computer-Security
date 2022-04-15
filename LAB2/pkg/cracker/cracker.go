@@ -11,19 +11,19 @@ import (
 )
 
 type cracker struct {
-	wordList    []string
+	passwords   []string
 	hash        string
 	threadCount uint8
 }
 
-func CreateCracker(hash, wordListFilePath string, threadCount uint8) (*cracker, error) {
-	wordList, err := readWordListFile(wordListFilePath)
+func CreateCracker(hash, passwordsFilePath string, threadCount uint8) (*cracker, error) {
+	passwords, err := readPasswordsFile(passwordsFilePath)
 	if err != nil {
 		return nil, err
 	}
 
 	return &cracker{
-		wordList:    wordList,
+		passwords:   passwords,
 		hash:        hash,
 		threadCount: threadCount,
 	}, nil
@@ -33,14 +33,14 @@ func (c *cracker) CrackPassword() {
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
 
-	wordChan := make(chan string, len(c.wordList))
-	for _, word := range c.wordList {
-		wordChan <- word
+	passwordsChan := make(chan string, len(c.passwords))
+	for _, password := range c.passwords {
+		passwordsChan <- password
 	}
 
 	for i := 0; i < int(c.threadCount); i++ {
 		wg.Add(1)
-		go checkPasswordMatch(ctx, cancel, &wg, wordChan, c.hash)
+		go c.checkPasswordMatch(ctx, cancel, &wg, passwordsChan)
 	}
 
 	wg.Wait()
@@ -48,8 +48,8 @@ func (c *cracker) CrackPassword() {
 	cancel()
 }
 
-func readWordListFile(wordListFilePath string) (wordList []string, err error) {
-	wordListFile, err := os.Open(wordListFilePath)
+func readPasswordsFile(passwordsFilePath string) (passwords []string, err error) {
+	passwordsFile, err := os.Open(passwordsFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -59,38 +59,37 @@ func readWordListFile(wordListFilePath string) (wordList []string, err error) {
 		if closeErr != nil {
 			err = closeErr
 		}
-	}(wordListFile)
+	}(passwordsFile)
 
-	scanner := bufio.NewScanner(wordListFile)
+	scanner := bufio.NewScanner(passwordsFile)
 	for scanner.Scan() {
-		wordList = append(wordList, scanner.Text())
+		passwords = append(passwords, scanner.Text())
 	}
 
 	if err = scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	return wordList, err
+	return passwords, err
 }
 
-func checkPasswordMatch(
+func (c *cracker) checkPasswordMatch(
 	ctx context.Context,
 	cancelFunc context.CancelFunc,
 	wg *sync.WaitGroup,
-	wordChan <-chan string,
-	hash string,
+	passwordsChan <-chan string,
 ) {
 	defer wg.Done()
 
 	for {
 		select {
-		case word := <-wordChan:
-			success, _, _ := hashing.ComparePasswordAndHash(word, hash)
+		case password := <-passwordsChan:
+			success, _, _ := hashing.ComparePasswordAndHash(password, c.hash)
 			if success {
-				fmt.Printf("Match found, checked word: %s\n", word)
+				fmt.Printf("Match found, checked password: %s\n", password)
 				cancelFunc()
 			} else {
-				fmt.Printf("Match not found, checked word: %s\n", word)
+				fmt.Printf("Match not found, checked password: %s\n", password)
 			}
 		case <-ctx.Done():
 			return

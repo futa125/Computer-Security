@@ -46,7 +46,7 @@ func ParseCrackerArgs() (
 	params *hashing.Params,
 	threadCount uint8,
 	password,
-	wordListFilePath string,
+	passwordsFilePath string,
 ) {
 	params = &hashing.Params{}
 	pflag.Uint32Var(&params.Memory, "argon-memory", 128, "")
@@ -58,11 +58,11 @@ func ParseCrackerArgs() (
 	pflag.Uint8Var(&threadCount, "threads", 4, "")
 
 	pflag.StringVar(&password, "password", "", "")
-	pflag.StringVar(&wordListFilePath, "wordlist", "", "")
+	pflag.StringVar(&passwordsFilePath, "passwords-file", "", "")
 
 	pflag.Parse()
 
 	params.Memory = params.Memory * 1024
 
-	return params, threadCount, password, wordListFilePath
+	return params, threadCount, password, passwordsFilePath
 }
