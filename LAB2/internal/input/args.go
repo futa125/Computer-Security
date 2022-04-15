@@ -38,3 +38,12 @@ func ParseUserManagementArgs() (string, string, error) {
 
 	return user, mode, nil
 }
+
+func ParseCrackerArgs() (argon2idHash, wordListFilePath string, threadCount uint) {
+	flag.StringVar(&argon2idHash, "hash", "", "")
+	flag.StringVar(&wordListFilePath, "wordlist", "", "")
+	flag.UintVar(&threadCount, "threads", 2, "")
+	flag.Parse()
+
+	return argon2idHash, wordListFilePath, threadCount
+}
