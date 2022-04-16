@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	algorithm       = "argon2id"
-	entryFormatting = "$%s$v=%d$m=%d,t=%d,p=%d$%s$%s"
+	Algorithm       = "argon2id"
+	EntryFormatting = "$%s$v=%d$m=%d,t=%d,p=%d$%s$%s"
 )
 
 type Params struct {
@@ -78,8 +78,8 @@ func GenerateHashFromPassword(password string, params *Params) (string, error) {
 	encodedHash := base64.RawStdEncoding.EncodeToString(hash)
 
 	entry := fmt.Sprintf(
-		entryFormatting,
-		algorithm,
+		EntryFormatting,
+		Algorithm,
 		argon2.Version,
 		params.Memory,
 		params.Iterations,
@@ -135,7 +135,7 @@ func decodeEntry(entry string) (params *Params, salt, hash []byte, err error) {
 	entryValues := strings.Split(entry, "$")
 	if len(entryValues) != 6 {
 		return nil, nil, nil, &InvalidEntryFormattingError{
-			expectedFormatting: entryFormatting,
+			expectedFormatting: EntryFormatting,
 			input:              entry,
 		}
 	}
@@ -146,10 +146,10 @@ func decodeEntry(entry string) (params *Params, salt, hash []byte, err error) {
 		return nil, nil, nil, err
 	}
 
-	if usedAlgorithm != algorithm {
+	if usedAlgorithm != Algorithm {
 		return nil, nil, nil, &IncompatibleAlgorithmError{
 			actualAlgorithm:   usedAlgorithm,
-			expectedAlgorithm: algorithm,
+			expectedAlgorithm: Algorithm,
 		}
 	}
 

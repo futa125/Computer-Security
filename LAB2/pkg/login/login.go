@@ -1,11 +1,27 @@
 package login
 
 import (
+	"fmt"
+
 	"github.com/futa125/Computer-Security/LAB2/internal/database"
 	"github.com/futa125/Computer-Security/LAB2/internal/hashing"
 	"github.com/futa125/Computer-Security/LAB2/internal/input"
 	"github.com/google/go-cmp/cmp"
+	"golang.org/x/crypto/argon2"
 )
+
+var fakeEntry = database.Entry{
+	HashedPassword: fmt.Sprintf(
+		hashing.EntryFormatting,
+		hashing.Algorithm,
+		argon2.Version,
+		hashing.DefaultHashingParams.Memory,
+		hashing.DefaultHashingParams.Iterations,
+		hashing.DefaultHashingParams.Parallelism,
+		"foo",
+		"foo",
+	),
+}
 
 type InvalidCredentialsError struct{}
 
@@ -32,7 +48,7 @@ func Login(user, dbFilePath string, params *hashing.Params) error {
 	}
 
 	if databaseEntry == (database.Entry{}) {
-		return &InvalidCredentialsError{}
+		databaseEntry = fakeEntry
 	}
 
 	match, usedParams, err := hashing.ComparePasswordAndHash(password, databaseEntry.HashedPassword)
