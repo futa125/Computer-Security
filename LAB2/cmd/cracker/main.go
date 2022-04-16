@@ -19,6 +19,11 @@ func main() {
 
 	fmt.Printf("Generated hash: %s\n", hash)
 
+	score := input.GetPasswordStrength(password, []string{})
+
+	fmt.Printf("Password score: %d/%d", score, input.MaxPasswordScore)
+	fmt.Println()
+
 	c, err := cracker.CreateCracker(hash, passwordsFilePath, threadCount)
 	if err != nil {
 		log.Fatal(err)

@@ -20,45 +20,53 @@ func main() {
 	switch mode {
 	case "add":
 		err := usermanagment.AddUser(user, dbFilePath, hashing.DefaultHashingParams)
-		switch err {
-		case input.ErrPasswordMismatch:
-			fmt.Println("User add failed. Password mismatch.")
-		case usermanagment.ErrUserExists:
-			fmt.Println("User add failed. User already exists")
+
+		switch err.(type) {
+		case *input.PasswordMismatchError:
+			fmt.Println(err)
+		case *input.PasswordTooWeakError:
+			fmt.Println(err)
+		case *usermanagment.UserExistsError:
+			fmt.Println(err)
 		case nil:
-			fmt.Printf("User %s successfuly added.\n", user)
+			fmt.Println("User successfully added")
 		default:
 			log.Fatal(err)
 		}
 	case "passwd":
 		err := usermanagment.ChangePassword(user, dbFilePath, hashing.DefaultHashingParams)
-		switch err {
-		case input.ErrPasswordMismatch:
-			fmt.Println("Password change failed. Password mismatch.")
-		case usermanagment.ErrUserNotFound:
-			fmt.Println("Password change failed. User doesn't exists")
+
+		switch err.(type) {
+		case *input.PasswordMismatchError:
+			fmt.Println(err)
+		case *input.PasswordTooWeakError:
+			fmt.Println(err)
+		case *usermanagment.UserNotFoundError:
+			fmt.Println(err)
 		case nil:
-			fmt.Println("Password change successful.")
+			fmt.Println("Password change successful")
 		default:
 			log.Fatal(err)
 		}
 	case "forcepass":
 		err := usermanagment.ForcePasswordReset(user, dbFilePath)
-		switch err {
-		case usermanagment.ErrUserNotFound:
-			fmt.Println("Force password change failed. User doesn't exists")
+
+		switch err.(type) {
+		case *usermanagment.UserNotFoundError:
+			fmt.Println(err)
 		case nil:
-			fmt.Println("User will be requested to change password on next login.")
+			fmt.Println("User will be requested to change password on next login")
 		default:
 			log.Fatal(err)
 		}
 	case "del":
 		err := usermanagment.DeleteUser(user, dbFilePath)
-		switch err {
-		case usermanagment.ErrUserNotFound:
-			fmt.Println("Delete user failed. User doesn't exists")
+
+		switch err.(type) {
+		case *usermanagment.UserNotFoundError:
+			fmt.Println(err)
 		case nil:
-			fmt.Println("User successfully removed.")
+			fmt.Println("User successfully removed")
 		default:
 			log.Fatal(err)
 		}

@@ -9,7 +9,10 @@ import (
 	"github.com/futa125/Computer-Security/LAB2/pkg/login"
 )
 
-const dbFilePath = "passwords.db"
+const (
+	dbFilePath      = "passwords.db"
+	loginCountLimit = 3
+)
 
 func main() {
 	user, err := input.ParseLoginArgs()
@@ -17,17 +20,33 @@ func main() {
 		log.Fatal(err)
 	}
 
+	loginCounter := 0
+
 	for {
 		err = login.Login(user, dbFilePath, hashing.DefaultHashingParams)
+		loginCounter += 1
 
-		switch err {
-		case login.ErrInvalidCredentials:
-			fmt.Println("Username or password incorrect.")
+		switch err.(type) {
+		case *input.PasswordMismatchError:
+			fmt.Println(err)
+			return
+		case *input.PasswordTooWeakError:
+			fmt.Println(err)
+			return
+		case *input.PasswordIdenticalError:
+			fmt.Println(err)
+			return
+		case *login.InvalidCredentialsError:
+			fmt.Println(err)
 		case nil:
-			fmt.Println("Login successful.")
+			fmt.Println("Login successful")
 			return
 		default:
 			log.Fatal(err)
+		}
+
+		if loginCounter >= loginCountLimit {
+			return
 		}
 	}
 }

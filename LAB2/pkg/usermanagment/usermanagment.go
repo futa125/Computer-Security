@@ -1,17 +1,28 @@
 package usermanagment
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/futa125/Computer-Security/LAB2/internal/database"
 	"github.com/futa125/Computer-Security/LAB2/internal/hashing"
 	"github.com/futa125/Computer-Security/LAB2/internal/input"
 )
 
-var (
-	ErrUserExists   = errors.New("user already exists")
-	ErrUserNotFound = errors.New("user not found")
-)
+type UserExistsError struct {
+	user string
+}
+
+type UserNotFoundError struct {
+	user string
+}
+
+func (e *UserExistsError) Error() string {
+	return fmt.Sprintf("User already exists: %s", e.user)
+}
+
+func (e *UserNotFoundError) Error() string {
+	return fmt.Sprintf("User not found: %s", e.user)
+}
 
 func AddUser(user, dbFilePath string, params *hashing.Params) error {
 	hashedUser := hashing.CalculateSha256(user)
@@ -26,10 +37,17 @@ func AddUser(user, dbFilePath string, params *hashing.Params) error {
 		return err
 	}
 	if databaseEntry != (database.Entry{}) {
-		return ErrUserExists
+		return &UserExistsError{
+			user: user,
+		}
 	}
 
-	password, err := input.ReadPassword("Password", true)
+	password, err := input.ReadPasswordWithRepeat()
+	if err != nil {
+		return err
+	}
+
+	err = input.CheckPasswordStrength(password, []string{user})
 	if err != nil {
 		return err
 	}
@@ -66,10 +84,17 @@ func ChangePassword(user, dbFilePath string, params *hashing.Params) error {
 		return err
 	}
 	if databaseEntry == (database.Entry{}) {
-		return ErrUserNotFound
+		return &UserNotFoundError{
+			user: user,
+		}
 	}
 
-	password, err := input.ReadPassword("Password", true)
+	password, err := input.ReadPasswordWithRepeat()
+	if err != nil {
+		return err
+	}
+
+	err = input.CheckPasswordStrength(password, []string{user})
 	if err != nil {
 		return err
 	}
@@ -90,19 +115,21 @@ func ChangePassword(user, dbFilePath string, params *hashing.Params) error {
 }
 
 func ForcePasswordReset(user, dbFilePath string) error {
-	user = hashing.CalculateSha256(user)
+	hashedUser := hashing.CalculateSha256(user)
 
 	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(user)
+	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
 	if err != nil {
 		return err
 	}
 	if databaseEntry == (database.Entry{}) {
-		return ErrUserNotFound
+		return &UserNotFoundError{
+			user: user,
+		}
 	}
 
 	databaseEntry.ResetPassword = true
@@ -116,19 +143,21 @@ func ForcePasswordReset(user, dbFilePath string) error {
 }
 
 func DeleteUser(user, dbFilePath string) error {
-	user = hashing.CalculateSha256(user)
+	hashedUser := hashing.CalculateSha256(user)
 
 	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(user)
+	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
 	if err != nil {
 		return err
 	}
 	if databaseEntry == (database.Entry{}) {
-		return ErrUserNotFound
+		return &UserNotFoundError{
+			user: user,
+		}
 	}
 
 	err = client.RemoveDatabaseEntry(databaseEntry)

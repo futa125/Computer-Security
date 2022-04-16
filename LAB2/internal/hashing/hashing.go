@@ -6,14 +6,16 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
 
-const entryFormatting = "$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s"
+const (
+	algorithm       = "argon2id"
+	entryFormatting = "$%s$v=%d$m=%d,t=%d,p=%d$%s$%s"
+)
 
 type Params struct {
 	Memory      uint32
@@ -23,19 +25,40 @@ type Params struct {
 	KeyLength   uint32
 }
 
-var (
-	DefaultHashingParams = &Params{
-		Memory:      128 * 1024,
-		Iterations:  4,
-		Parallelism: 4,
-		SaltLength:  16,
-		KeyLength:   32,
-	}
+type InvalidEntryFormattingError struct {
+	expectedFormatting string
+	input              string
+}
 
-	ErrInvalidEntryFormatting = errors.New("the encoded entry is not in the correct format")
-	ErrIncompatibleAlgorithm  = errors.New("algorithm should be argon2id")
-	ErrIncompatibleVersion    = errors.New("incompatible version of argon2id")
-)
+type IncompatibleAlgorithmError struct {
+	expectedAlgorithm string
+	actualAlgorithm   string
+}
+
+type IncompatibleVersionError struct {
+	expectedVersion int
+	actualVersion   int
+}
+
+func (e *InvalidEntryFormattingError) Error() string {
+	return "The encoded entry is not in the correct format"
+}
+
+func (e *IncompatibleAlgorithmError) Error() string {
+	return "Algorithm should be argon2id"
+}
+
+func (e *IncompatibleVersionError) Error() string {
+	return "Incompatible version of argon2id"
+}
+
+var DefaultHashingParams = &Params{
+	Memory:      64 * 1024,
+	Iterations:  3,
+	Parallelism: 4,
+	SaltLength:  16,
+	KeyLength:   32,
+}
 
 func GenerateHashFromPassword(password string, params *Params) (string, error) {
 	salt, err := generateRandomBytes(params.SaltLength)
@@ -56,6 +79,7 @@ func GenerateHashFromPassword(password string, params *Params) (string, error) {
 
 	entry := fmt.Sprintf(
 		entryFormatting,
+		algorithm,
 		argon2.Version,
 		params.Memory,
 		params.Iterations,
@@ -109,16 +133,23 @@ func generateRandomBytes(byteCount uint32) ([]byte, error) {
 func decodeEntry(entry string) (params *Params, salt, hash []byte, err error) {
 	entryValues := strings.Split(entry, "$")
 	if len(entryValues) != 6 {
-		return nil, nil, nil, ErrInvalidEntryFormatting
+		return nil, nil, nil, &InvalidEntryFormattingError{
+			expectedFormatting: entryFormatting,
+			input:              entry,
+		}
 	}
 
-	var hashingAlgorithm string
-	_, err = fmt.Sscanf(entryValues[1], "%s", &hashingAlgorithm)
+	var usedAlgorithm string
+	_, err = fmt.Sscanf(entryValues[1], "%s", &usedAlgorithm)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	if hashingAlgorithm != "argon2id" {
-		return nil, nil, nil, ErrIncompatibleAlgorithm
+
+	if usedAlgorithm != algorithm {
+		return nil, nil, nil, &IncompatibleAlgorithmError{
+			actualAlgorithm:   usedAlgorithm,
+			expectedAlgorithm: algorithm,
+		}
 	}
 
 	var version int
@@ -127,7 +158,10 @@ func decodeEntry(entry string) (params *Params, salt, hash []byte, err error) {
 		return nil, nil, nil, err
 	}
 	if version != argon2.Version {
-		return nil, nil, nil, ErrIncompatibleVersion
+		return nil, nil, nil, &IncompatibleVersionError{
+			expectedVersion: argon2.Version,
+			actualVersion:   version,
+		}
 	}
 
 	params = &Params{}

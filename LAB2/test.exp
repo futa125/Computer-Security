@@ -1,0 +1,66 @@
+#!/usr/bin/expect
+
+set old_password HSt73yZCjZ286TY9eS9J8QkUbA
+
+puts "Initial password: $old_password\r"
+eval spawn ./usermanagement add ivan
+expect "Password: "
+send -- "$old_password\r";
+expect "Repeat password: "
+send -- "$old_password\r";
+interact
+puts "\r"
+
+eval spawn ./login ivan
+expect "Password: "
+send -- "$old_password\r";
+interact
+puts "\r"
+
+set new_password uxTW9j7jTD9cKxJrjg62H8AWhj
+
+puts "Old password: $old_password, new password: $new_password\r"
+eval spawn ./usermanagement passwd ivan
+expect "Password: "
+send -- "$new_password\r";
+expect "Repeat password: "
+send -- "$new_password\r";
+interact
+puts "\r"
+
+eval spawn ./login ivan
+expect "Password: "
+send -- "$new_password\r";
+interact
+puts "\r"
+
+eval spawn ./usermanagement forcepass ivan
+interact
+puts "\r"
+
+set old_password uxTW9j7jTD9cKxJrjg62H8AWhj
+set new_password KkWY73WYMyUS3gceg2aG7gZ6kr
+
+puts "Old password: $old_password, new password: $new_password\r"
+eval spawn ./login ivan
+expect "Password: "
+send -- "$old_password\r";
+expect "New password: "
+send -- "$new_password\r";
+expect "Repeat new password: "
+send -- "$new_password\r";
+interact
+puts "\r"
+
+eval spawn ./usermanagement del ivan
+interact
+puts "\r"
+
+eval spawn ./login ivan
+expect "Password: "
+send -- "$new_password\r";
+expect "Password: "
+send -- "$new_password\r";
+expect "Password: "
+send -- "$new_password\r";
+expect eof

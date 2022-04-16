@@ -1,26 +1,39 @@
 package input
 
 import (
-	"errors"
 	"flag"
+	"fmt"
 
 	"github.com/futa125/Computer-Security/LAB2/internal/hashing"
 	"github.com/spf13/pflag"
 )
 
-var ErrInvalidArgument = errors.New("invalid argument")
+type InvalidArgumentError struct {
+	argument string
+	value    string
+}
+
+func (e *InvalidArgumentError) Error() string {
+	return fmt.Sprintf("invalid argument '%s' with value '%s'", e.argument, e.value)
+}
 
 func ParseLoginArgs() (string, error) {
 	flag.Parse()
 
 	args := flag.Args()
 	if flag.NArg() != 1 {
-		return "", ErrInvalidArgument
+		return "", &InvalidArgumentError{
+			argument: "login",
+			value:    "",
+		}
 	}
 
 	user := args[0]
 	if user == "" {
-		return "", ErrInvalidArgument
+		return "", &InvalidArgumentError{
+			argument: "user",
+			value:    "",
+		}
 	}
 
 	return user, nil
@@ -31,13 +44,13 @@ func ParseUserManagementArgs() (string, string, error) {
 
 	args := flag.Args()
 	if flag.NArg() != 2 {
-		return "", "", ErrInvalidArgument
+		return "", "", &InvalidArgumentError{
+			argument: "mode,user",
+			value:    "",
+		}
 	}
 
 	user, mode := args[0], args[1]
-	if user == "" || mode == "" {
-		return "", "", ErrInvalidArgument
-	}
 
 	return user, mode, nil
 }
@@ -49,20 +62,18 @@ func ParseCrackerArgs() (
 	passwordsFilePath string,
 ) {
 	params = &hashing.Params{}
-	pflag.Uint32Var(&params.Memory, "argon-memory", 128, "")
-	pflag.Uint32Var(&params.Iterations, "argon-iterations", 4, "")
-	pflag.Uint8Var(&params.Parallelism, "argon-parallelism", 4, "")
-	pflag.Uint32Var(&params.SaltLength, "argon-salt-length", 16, "")
-	pflag.Uint32Var(&params.KeyLength, "argon-key-length", 32, "")
+	pflag.Uint32Var(&params.Memory, "argon-memory", hashing.DefaultHashingParams.Memory, "")
+	pflag.Uint32Var(&params.Iterations, "argon-iterations", hashing.DefaultHashingParams.Iterations, "")
+	pflag.Uint8Var(&params.Parallelism, "argon-parallelism", hashing.DefaultHashingParams.Parallelism, "")
+	pflag.Uint32Var(&params.SaltLength, "argon-salt-length", hashing.DefaultHashingParams.SaltLength, "")
+	pflag.Uint32Var(&params.KeyLength, "argon-key-length", hashing.DefaultHashingParams.KeyLength, "")
 
-	pflag.Uint8Var(&threadCount, "threads", 4, "")
+	pflag.Uint8Var(&threadCount, "threads", 1, "")
 
 	pflag.StringVar(&password, "password", "", "")
 	pflag.StringVar(&passwordsFilePath, "passwords-file", "", "")
 
 	pflag.Parse()
-
-	params.Memory = params.Memory * 1024
 
 	return params, threadCount, password, passwordsFilePath
 }

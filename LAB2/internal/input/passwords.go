@@ -2,47 +2,128 @@ package input
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 	"syscall"
-	"unicode"
 
+	"github.com/futa125/Computer-Security/LAB2/internal/hashing"
+	"github.com/trustelem/zxcvbn"
 	"golang.org/x/term"
 )
 
-var ErrPasswordMismatch = errors.New("password mismatch")
+const (
+	MinValidPasswordScore = 3
+	MaxPasswordScore      = 4
+)
 
-func ReadPassword(promptText string, recheck bool) (string, error) {
-	regularPrompt := capitalizeFirstWord(fmt.Sprintf("%s: ", promptText))
-	repeatPrompt := capitalizeFirstWord(fmt.Sprintf("Repeat %s: ", promptText))
+type PasswordMismatchError struct{}
 
-	fmt.Printf(regularPrompt)
+type PasswordTooWeakError struct {
+	expectedScore int
+	actualScore   int
+}
+
+type PasswordIdenticalError struct{}
+
+func (e *PasswordMismatchError) Error() string {
+	return "Password mismatch"
+}
+
+func (e *PasswordTooWeakError) Error() string {
+	return fmt.Sprintf("Password too weak, score should be >= %d, actual score: %d", e.expectedScore, e.actualScore)
+}
+
+func (e *PasswordIdenticalError) Error() string {
+	return "New password can't be same as old password"
+}
+
+func ReadPassword() (string, error) {
+	fmt.Printf("Password: ")
 	bytePassword, err := term.ReadPassword(syscall.Stdin)
 	fmt.Println()
 	if err != nil {
 		return "", err
 	}
 
-	if recheck {
-		fmt.Printf(repeatPrompt)
-		repeatedBytePassword, err := term.ReadPassword(syscall.Stdin)
-		fmt.Println()
-		if err != nil {
-			return "", err
-		}
+	password := strings.TrimSpace(string(bytePassword))
 
-		if bytes.Compare(bytePassword, repeatedBytePassword) != 0 {
-			return "", ErrPasswordMismatch
+	return password, nil
+}
+
+func ReadPasswordWithRepeat() (string, error) {
+	fmt.Printf("Password: ")
+	bytePassword, err := term.ReadPassword(syscall.Stdin)
+	fmt.Println()
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Printf("Repeat password: ")
+	bytePasswordRepeated, err := term.ReadPassword(syscall.Stdin)
+	fmt.Println()
+	if err != nil {
+		return "", err
+	}
+
+	if bytes.Compare(bytePassword, bytePasswordRepeated) != 0 {
+		return "", &PasswordMismatchError{}
+	}
+
+	password := strings.TrimSpace(string(bytePassword))
+
+	return password, nil
+}
+
+func ReadNewPassword() (string, error) {
+	fmt.Printf("New password: ")
+	bytePassword, err := term.ReadPassword(syscall.Stdin)
+	fmt.Println()
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Printf("Repeat new password: ")
+	bytePasswordRepeated, err := term.ReadPassword(syscall.Stdin)
+	fmt.Println()
+	if err != nil {
+		return "", err
+	}
+
+	if bytes.Compare(bytePassword, bytePasswordRepeated) != 0 {
+		return "", &PasswordMismatchError{}
+	}
+
+	password := strings.TrimSpace(string(bytePassword))
+
+	return password, nil
+}
+
+func CheckPasswordStrength(password string, keywords []string) error {
+	if score := GetPasswordStrength(password, keywords); score < MinValidPasswordScore {
+		return &PasswordTooWeakError{
+			expectedScore: MinValidPasswordScore,
+			actualScore:   score,
 		}
 	}
 
-	password := string(bytePassword)
-
-	return strings.TrimSpace(password), nil
+	return nil
 }
 
-func capitalizeFirstWord(text string) string {
-	r := []rune(strings.ToLower(text))
-	return string(append([]rune{unicode.ToUpper(r[0])}, r[1:]...))
+func GetPasswordStrength(password string, keywords []string) int {
+	result := zxcvbn.PasswordStrength(password, keywords)
+
+	return result.Score
+}
+
+func CheckPasswordIdentical(password, hashedPassword string) error {
+	identical, _, err := hashing.ComparePasswordAndHash(password, hashedPassword)
+	if err != nil {
+		return err
+	}
+
+	if identical {
+		return &PasswordIdenticalError{}
+	}
+
+	return nil
 }
