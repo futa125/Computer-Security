@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if ! command -v go &> /dev/null
+then
+    echo "Go not installed"
+    exit
+fi
+
 [ -e main ] && rm main
 [ -e login ] && rm login
 [ -e usermanagement ] && rm usermanagement
