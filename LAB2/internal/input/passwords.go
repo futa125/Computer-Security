@@ -1,7 +1,7 @@
 package input
 
 import (
-	"bytes"
+	"crypto/subtle"
 	"fmt"
 	"strings"
 	"syscall"
@@ -65,7 +65,7 @@ func ReadPasswordWithRepeat() (string, error) {
 		return "", err
 	}
 
-	if bytes.Compare(bytePassword, bytePasswordRepeated) != 0 {
+	if subtle.ConstantTimeCompare(bytePassword, bytePasswordRepeated) == 0 {
 		return "", &PasswordMismatchError{}
 	}
 
@@ -89,7 +89,7 @@ func ReadNewPassword() (string, error) {
 		return "", err
 	}
 
-	if bytes.Compare(bytePassword, bytePasswordRepeated) != 0 {
+	if subtle.ConstantTimeCompare(bytePassword, bytePasswordRepeated) == 0 {
 		return "", &PasswordMismatchError{}
 	}
 

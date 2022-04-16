@@ -1,9 +1,9 @@
 package hashing
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -106,10 +106,11 @@ func ComparePasswordAndHash(password, entry string) (bool, *Params, error) {
 		params.KeyLength,
 	)
 
-	if bytes.Compare(hash, calculatedHash) == 0 {
-		return true, params, nil
+	if subtle.ConstantTimeCompare(hash, calculatedHash) == 0 {
+		return false, params, nil
 	}
-	return false, params, nil
+
+	return true, params, nil
 }
 
 func CalculateSha256(input string) string {
