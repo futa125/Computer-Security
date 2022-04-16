@@ -8,33 +8,28 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type InvalidArgumentError struct {
-	argument string
-	value    string
+type InvalidArgumentCountError struct {
+	expectedCount int
+	actualCount   int
 }
 
-func (e *InvalidArgumentError) Error() string {
-	return fmt.Sprintf("invalid argument '%s' with value '%s'", e.argument, e.value)
+func (e *InvalidArgumentCountError) Error() string {
+	return fmt.Sprintf("invalid argument count, expected: %d, actual: %d", e.expectedCount, e.actualCount)
 }
 
 func ParseLoginArgs() (string, error) {
 	flag.Parse()
 
 	args := flag.Args()
-	if flag.NArg() != 1 {
-		return "", &InvalidArgumentError{
-			argument: "login",
-			value:    "",
+	argCount := flag.NArg()
+	if argCount != 1 {
+		return "", &InvalidArgumentCountError{
+			expectedCount: 1,
+			actualCount:   argCount,
 		}
 	}
 
 	user := args[0]
-	if user == "" {
-		return "", &InvalidArgumentError{
-			argument: "user",
-			value:    "",
-		}
-	}
 
 	return user, nil
 }
@@ -43,10 +38,11 @@ func ParseUserManagementArgs() (string, string, error) {
 	flag.Parse()
 
 	args := flag.Args()
-	if flag.NArg() != 2 {
-		return "", "", &InvalidArgumentError{
-			argument: "mode,user",
-			value:    "",
+	argCount := flag.NArg()
+	if argCount != 2 {
+		return "", "", &InvalidArgumentCountError{
+			expectedCount: 2,
+			actualCount:   argCount,
 		}
 	}
 

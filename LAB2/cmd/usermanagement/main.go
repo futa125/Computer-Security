@@ -70,6 +70,8 @@ func main() {
 		default:
 			log.Fatal(err)
 		}
+	default:
+		log.Fatalf("Invalid mode argument: %s", mode)
 	}
 
 }
