@@ -16,7 +16,7 @@ const (
 )
 
 type Entry struct {
-	HashedUser     string
+	User           string
 	HashedPassword string
 	ResetPassword  bool
 }
@@ -50,7 +50,7 @@ func (client Client) SaveDatabaseEntry(dbEntry Entry) (err error) {
 		return err
 	}
 
-	_, err = stmt.Exec(dbEntry.HashedUser, dbEntry.HashedPassword, dbEntry.ResetPassword)
+	_, err = stmt.Exec(dbEntry.User, dbEntry.HashedPassword, dbEntry.ResetPassword)
 	if err != nil {
 		return err
 	}
@@ -65,8 +65,8 @@ func (client Client) SaveDatabaseEntry(dbEntry Entry) (err error) {
 	return err
 }
 
-func (client Client) GetDatabaseEntry(hashedUser string) (entry Entry, err error) {
-	rows, err := client.db.Query(selectQuery, hashedUser)
+func (client Client) GetDatabaseEntry(user string) (entry Entry, err error) {
+	rows, err := client.db.Query(selectQuery, user)
 	entry = Entry{}
 	if err != nil {
 		return entry, err
@@ -80,17 +80,17 @@ func (client Client) GetDatabaseEntry(hashedUser string) (entry Entry, err error
 	}(rows)
 
 	if rows.Next() {
-		var hashedUser string
+		var user string
 		var hashedPassword string
 		var resetPassword bool
 
-		err = rows.Scan(&hashedUser, &hashedPassword, &resetPassword)
+		err = rows.Scan(&user, &hashedPassword, &resetPassword)
 		if err != nil {
 			return entry, err
 		}
 
 		entry = Entry{
-			HashedUser:     hashedUser,
+			User:           user,
 			HashedPassword: hashedPassword,
 			ResetPassword:  resetPassword,
 		}
@@ -107,7 +107,7 @@ func (client Client) RemoveDatabaseEntry(dbEntry Entry) (err error) {
 		return err
 	}
 
-	_, err = stmt.Exec(dbEntry.HashedUser)
+	_, err = stmt.Exec(dbEntry.User)
 	if err != nil {
 		return err
 	}

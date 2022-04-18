@@ -41,6 +41,8 @@ func main() {
 			fmt.Println(err)
 		case *input.PasswordTooWeakError:
 			fmt.Println(err)
+		case *input.PasswordIdenticalError:
+			fmt.Println(err)
 		case *usermanagment.UserNotFoundError:
 			fmt.Println(err)
 		case nil:

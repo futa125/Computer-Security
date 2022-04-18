@@ -25,14 +25,12 @@ func (e *UserNotFoundError) Error() string {
 }
 
 func AddUser(user, dbFilePath string, params *hashing.Params) error {
-	hashedUser := hashing.CalculateSha256(user)
-
 	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
+	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
 		return err
 	}
@@ -58,7 +56,7 @@ func AddUser(user, dbFilePath string, params *hashing.Params) error {
 	}
 
 	databaseEntry = database.Entry{
-		HashedUser:     hashedUser,
+		User:           user,
 		HashedPassword: hashedPassword,
 		ResetPassword:  false,
 	}
@@ -72,14 +70,12 @@ func AddUser(user, dbFilePath string, params *hashing.Params) error {
 }
 
 func ChangePassword(user, dbFilePath string, params *hashing.Params) error {
-	hashedUser := hashing.CalculateSha256(user)
-
 	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
+	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
 		return err
 	}
@@ -90,6 +86,11 @@ func ChangePassword(user, dbFilePath string, params *hashing.Params) error {
 	}
 
 	password, err := input.ReadPasswordWithRepeat()
+	if err != nil {
+		return err
+	}
+
+	err = input.CheckPasswordIdentical(password, databaseEntry.HashedPassword)
 	if err != nil {
 		return err
 	}
@@ -115,14 +116,12 @@ func ChangePassword(user, dbFilePath string, params *hashing.Params) error {
 }
 
 func ForcePasswordReset(user, dbFilePath string) error {
-	hashedUser := hashing.CalculateSha256(user)
-
 	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
+	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
 		return err
 	}
@@ -143,14 +142,12 @@ func ForcePasswordReset(user, dbFilePath string) error {
 }
 
 func DeleteUser(user, dbFilePath string) error {
-	hashedUser := hashing.CalculateSha256(user)
-
 	client, err := database.CreateDatabaseClient(dbFilePath)
 	if err != nil {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
+	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
 		return err
 	}

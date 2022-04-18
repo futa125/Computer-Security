@@ -30,8 +30,6 @@ func (e *InvalidCredentialsError) Error() string {
 }
 
 func Login(user, dbFilePath string, params *hashing.Params) error {
-	hashedUser := hashing.CalculateSha256(user)
-
 	password, err := input.ReadPassword()
 	if err != nil {
 		return err
@@ -42,7 +40,7 @@ func Login(user, dbFilePath string, params *hashing.Params) error {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
+	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
 		return err
 	}
@@ -75,14 +73,13 @@ func Login(user, dbFilePath string, params *hashing.Params) error {
 }
 
 func rehashPassword(user, password string, client database.Client, params *hashing.Params) error {
-	hashedUser := hashing.CalculateSha256(user)
 	hashedPassword, err := hashing.GenerateHashFromPassword(password, params)
 	if err != nil {
 		return err
 	}
 
 	databaseEntry := database.Entry{
-		HashedUser:     hashedUser,
+		User:           user,
 		HashedPassword: hashedPassword,
 		ResetPassword:  false,
 	}
@@ -96,13 +93,12 @@ func rehashPassword(user, password string, client database.Client, params *hashi
 }
 
 func resetPassword(user string, client database.Client, params *hashing.Params) error {
-	hashedUser := hashing.CalculateSha256(user)
 	password, err := input.ReadNewPassword()
 	if err != nil {
 		return err
 	}
 
-	databaseEntry, err := client.GetDatabaseEntry(hashedUser)
+	databaseEntry, err := client.GetDatabaseEntry(user)
 	if err != nil {
 		return err
 	}
@@ -123,7 +119,7 @@ func resetPassword(user string, client database.Client, params *hashing.Params) 
 	}
 
 	databaseEntry = database.Entry{
-		HashedUser:     hashedUser,
+		User:           user,
 		HashedPassword: hashedPassword,
 		ResetPassword:  false,
 	}

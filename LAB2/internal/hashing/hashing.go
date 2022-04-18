@@ -2,10 +2,8 @@ package hashing
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -111,14 +109,6 @@ func ComparePasswordAndHash(password, entry string) (bool, *Params, error) {
 	}
 
 	return true, params, nil
-}
-
-func CalculateSha256(input string) string {
-	hash := sha256.New()
-	hash.Write([]byte(input))
-	encodedHash := hex.EncodeToString(hash.Sum(nil))
-
-	return encodedHash
 }
 
 func generateRandomBytes(byteCount uint32) ([]byte, error) {
