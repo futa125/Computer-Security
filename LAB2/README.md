@@ -40,23 +40,23 @@
   * Za provjeru jačine lozinke koristi se Dropboxov [zxcvbn](https://github.com/dropbox/zxcvbn)  
   algoritam koji svakoj lozinki daje ocjenu jačine od 0 do 4
 * Misc.
-  * Tijekom resetiranja lozinka radi se provjera je li nova lozinka jednaka staroj
+  * Tijekom resetiranja lozinki radi se provjera je li nova lozinka jednaka staroj
   * Korisniku je dopušteno da maksimalno 3 puta unese krivu lozinku tijekom prijave
 
 ## Implementirane zaštite
 * Korištena kriptografska funkcija sažetka (argon2id)
 * Generiran novi salt tijekom dodavanja novog korisnika, promjene lozinke ili  
-promjene parametara hashiranja
-* Postavljanje minimalne jačine lozinka (zxcvbn ocjena veća ili jednaka 3)
+promjene parametara hashinga
+* Postavljanje minimalne jačine lozinki (zxcvbn ocjena veća ili jednaka 3)
 * Lozinke nisu vidljive tijekom upisa
 * Prevencija vremenskih napada (timing attack) tijekom usporedbe hasheva korištenjem  
 [funkcije s konstantnim vremenom usporedbe](https://pkg.go.dev/crypto/subtle#ConstantTimeCompare)
 
 ## Neimplementirane zaštite
-* Korištenje peppera tijekom hashiranja lozinka
+* Korištenje peppera tijekom hashinga lozinki
   * Argon2id algoritam je dovoljno otporan na bruteforce napade čak i ako napadač dobi pristup  
   korištenom saltu pod uvjetom da je korištena dovoljno jaka lozinka
-* Hashiranje ili enkripcija korisničkih imena
-  * Ako napadač dobi pristup datoteci, može vidjeti popis svih korisnika
+* Hashing ili enkripcija korisničkih imena
+  * Ako napadač dobi pristup datoteci može vidjeti popis svih korisnika
   * Ovisno o svrhi sustava ovo može, ali i ne mora biti prihvatljivo
     * npr. u slučaju društvene mreže je prihvatljivo
