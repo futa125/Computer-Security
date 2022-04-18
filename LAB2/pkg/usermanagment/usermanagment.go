@@ -17,11 +17,11 @@ type UserNotFoundError struct {
 }
 
 func (e *UserExistsError) Error() string {
-	return fmt.Sprintf("User already exists: %s", e.user)
+	return fmt.Sprintf("Username already exists: %s", e.user)
 }
 
 func (e *UserNotFoundError) Error() string {
-	return fmt.Sprintf("User not found: %s", e.user)
+	return fmt.Sprintf("Username not found: %s", e.user)
 }
 
 func AddUser(user, dbFilePath string, params *hashing.Params) error {
@@ -56,7 +56,7 @@ func AddUser(user, dbFilePath string, params *hashing.Params) error {
 	}
 
 	databaseEntry = database.Entry{
-		User:           user,
+		Username:       user,
 		HashedPassword: hashedPassword,
 		ResetPassword:  false,
 	}

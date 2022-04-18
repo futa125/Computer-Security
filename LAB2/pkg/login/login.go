@@ -79,7 +79,7 @@ func rehashPassword(user, password string, client database.Client, params *hashi
 	}
 
 	databaseEntry := database.Entry{
-		User:           user,
+		Username:       user,
 		HashedPassword: hashedPassword,
 		ResetPassword:  false,
 	}
@@ -119,7 +119,7 @@ func resetPassword(user string, client database.Client, params *hashing.Params) 
 	}
 
 	databaseEntry = database.Entry{
-		User:           user,
+		Username:       user,
 		HashedPassword: hashedPassword,
 		ResetPassword:  false,
 	}

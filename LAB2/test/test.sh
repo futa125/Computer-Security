@@ -11,8 +11,8 @@ fi
 [ -e usermanagement ] && rm usermanagement
 [ -e passwords.db ] && rm passwords.db
 
-go build cmd/login/main.go && mv main login
-go build cmd/usermanagement/main.go && mv main usermanagement
+go build ../cmd/login/login.go
+go build ../cmd/usermanagement/usermanagement.go
 
 ./test.exp | sed 's/spawn //g'
 

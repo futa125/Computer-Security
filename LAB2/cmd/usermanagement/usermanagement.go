@@ -29,7 +29,7 @@ func main() {
 		case *usermanagment.UserExistsError:
 			fmt.Println(err)
 		case nil:
-			fmt.Println("User successfully added")
+			fmt.Println("Username successfully added")
 		default:
 			log.Fatal(err)
 		}
@@ -57,7 +57,7 @@ func main() {
 		case *usermanagment.UserNotFoundError:
 			fmt.Println(err)
 		case nil:
-			fmt.Println("User will be requested to change password on next login")
+			fmt.Println("Username will be requested to change password on next login")
 		default:
 			log.Fatal(err)
 		}
@@ -68,7 +68,7 @@ func main() {
 		case *usermanagment.UserNotFoundError:
 			fmt.Println(err)
 		case nil:
-			fmt.Println("User successfully removed")
+			fmt.Println("Username successfully removed")
 		default:
 			log.Fatal(err)
 		}

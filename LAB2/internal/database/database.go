@@ -9,14 +9,14 @@ import (
 const (
 	driverName = "sqlite3"
 
-	createTableQuery = "CREATE TABLE IF NOT EXISTS passwords (hashedUser TEXT PRIMARY KEY, hashedPassword TEXT NOT NULL, resetPassword INT NOT NULL)"
-	insertQuery      = "INSERT OR REPLACE INTO passwords (hashedUser, hashedPassword, resetPassword) VALUES (?, ?, ?)"
-	selectQuery      = "SELECT * FROM passwords WHERE hashedUser=?"
-	removeQuery      = "DELETE FROM passwords WHERE hashedUser=?"
+	createTableQuery = "CREATE TABLE IF NOT EXISTS passwords (username TEXT PRIMARY KEY, hashedPassword TEXT NOT NULL, resetPassword INT NOT NULL)"
+	insertQuery      = "INSERT OR REPLACE INTO passwords (username, hashedPassword, resetPassword) VALUES (?, ?, ?)"
+	selectQuery      = "SELECT * FROM passwords WHERE username=?"
+	removeQuery      = "DELETE FROM passwords WHERE username=?"
 )
 
 type Entry struct {
-	User           string
+	Username       string
 	HashedPassword string
 	ResetPassword  bool
 }
@@ -50,7 +50,7 @@ func (client Client) SaveDatabaseEntry(dbEntry Entry) (err error) {
 		return err
 	}
 
-	_, err = stmt.Exec(dbEntry.User, dbEntry.HashedPassword, dbEntry.ResetPassword)
+	_, err = stmt.Exec(dbEntry.Username, dbEntry.HashedPassword, dbEntry.ResetPassword)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (client Client) GetDatabaseEntry(user string) (entry Entry, err error) {
 		}
 
 		entry = Entry{
-			User:           user,
+			Username:       user,
 			HashedPassword: hashedPassword,
 			ResetPassword:  resetPassword,
 		}
@@ -107,7 +107,7 @@ func (client Client) RemoveDatabaseEntry(dbEntry Entry) (err error) {
 		return err
 	}
 
-	_, err = stmt.Exec(dbEntry.User)
+	_, err = stmt.Exec(dbEntry.Username)
 	if err != nil {
 		return err
 	}
