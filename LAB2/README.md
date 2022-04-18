@@ -34,7 +34,7 @@
     ```
 * Password Hashing
   * Za hashing koristi se argon2id algoritam s parametrima definiranima u  
-  [RFC 9106](https://www.rfc-editor.org/info/rfc9106) LOW MEMORY profilu
+  [RFC 9106](https://www.rfc-editor.org/info/rfc9106) HIGH MEMORY profilu
   * Tijekom usporedbe hasheva koristi se funkcija s konstantnim vremenom usporedbe
 * Password Strength
   * Za provjeru jačine lozinke koristi se Dropboxov [zxcvbn](https://github.com/dropbox/zxcvbn)  

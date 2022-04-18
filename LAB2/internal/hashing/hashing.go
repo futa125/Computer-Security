@@ -15,6 +15,14 @@ const (
 	EntryFormatting = "$%s$v=%d$m=%d,t=%d,p=%d$%s$%s"
 )
 
+var DefaultHashingParams = &Params{
+	Memory:      2048 * 1024,
+	Iterations:  1,
+	Parallelism: 4,
+	SaltLength:  16,
+	KeyLength:   32,
+}
+
 type Params struct {
 	Memory      uint32
 	Iterations  uint32
@@ -48,14 +56,6 @@ func (e *IncompatibleAlgorithmError) Error() string {
 
 func (e *IncompatibleVersionError) Error() string {
 	return "Incompatible version of argon2id"
-}
-
-var DefaultHashingParams = &Params{
-	Memory:      64 * 1024,
-	Iterations:  3,
-	Parallelism: 4,
-	SaltLength:  16,
-	KeyLength:   32,
 }
 
 func GenerateHashFromPassword(password string, params *Params) (string, error) {
