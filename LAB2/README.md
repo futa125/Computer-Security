@@ -47,7 +47,7 @@
 * Korištena kriptografska funkcija sažetka (argon2id)
 * Generiran novi salt tijekom dodavanja novog korisnika, promjene lozinke ili  
 promjene parametara hashinga
-* Postavljanje minimalne jačine lozinki (zxcvbn ocjena veća ili jednaka 3)
+* Postavljena minimalna jačina lozinki (zxcvbn ocjena veća ili jednaka 3)
 * Lozinke nisu vidljive tijekom upisa
 * Prevencija vremenskih napada (timing attack) tijekom usporedbe hasheva korištenjem  
 [funkcije s konstantnim vremenom usporedbe](https://pkg.go.dev/crypto/subtle#ConstantTimeCompare)
