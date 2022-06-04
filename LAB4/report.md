@@ -1,0 +1,18 @@
+- U Wiresharku vidimo da računalo PC1 uspostavlja vezu sa serverom u DMZ te da se paketi normalno kreću kroz mrežu
+
+- Računala iz lokalne mreže (LAN) imaju neograničeni pristup poslužiteljima u DMZ i Internetu
+  - Dozvoljavamo promet koji dolazi sa lokalne mreže (eth1) i ide prema internetu (eth0) ili prema DMZ (eth2)
+- Pristup iz vanjske mreže u lokalnu LAN mrežu je zabranjen
+  - Dodatno pravilo je nepotrebno jer je već zabranjeno ako nije eksplicitno dopušteno
+- Iz vanjske mreže (Interneta) dozvoljen je pristup poslužitelju server u DMZ korištenjem protokola SSH (tcp port 22) i DNS (udp i tcp port 53)
+  - Dozvoljavamo promet koji dolazi iz interneta (eth0) i ide prema DMZ (eth2) te prema poslužitelju server (203.0.113.10), a koristi protokol TCP i port 22/53 ili protokol UDP i port 53
+- S poslužitelja server je dozvoljen pristup DNS poslužiteljima u Internetu (UDP i TCP port 53)
+  - Dozvoljavamo promet koji dolazi iz DMZ (eth2) sa poslužitelja server (203.0.113.10) i usmjeren je prema internetu (eth0), a koristi port 53 sa protokolom UDP ili TCP
+- S poslužitelja server je dozvoljen pristup poslužitelju host (u LAN) korištenjem protokola SSH
+  - Dozvoljavamo promet koji dolazi iz DMZ (eth2) sa IP adrese 203.0.113.10 i ide prema lokalnoj mreži (eth1) na IP adresu 203.0.113.10, a koristi TCP protokol i port 22
+- SSH pristup vatrozidu firewall je dozvoljen samo s računala admin (LAN)
+  - Ne koristimo FORWARD pa moramo definirati dva različita pravila, jedno za INPUT i jedno za OUTPUT
+  - Dozvoljavamo promet koji dolazi sa IP adrese 10.0.0.10 i ide prema portu 22 te koristi protokol TCP
+  - Dozvoljavamo promet koji ide prema IP adresi 10.0.0.10 i dolazi sa porta 22 te koristi protokol TCP
+- Dodajte “anti-spoofing” pravila
+  - Zabranjujemo promet koji dolazi iz interneta (eth0), a source IP adresa spada u jedan od subneta: 203.0.113.0/24, 10.0.0.0/24 (IP adrese koje odgovaraju lokalnoj mreži i DMZ)
